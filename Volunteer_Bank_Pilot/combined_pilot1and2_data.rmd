@@ -1,0 +1,537 @@
+---
+title: "Volunteer_Opportunities_Pilot1and2"
+author: "Yochai Shavit"
+date: "September 1, 2016"
+output: html_document
+---
+```{r load packages}
+library(ggplot2)
+library(GGally)
+library(knitr)
+library(psych)
+library(car)
+library(tidyr)
+library(dplyr)
+library(lme4)
+library(lmerTest)
+
+## scale.means function ##
+scale.means= function (df, ..., na.rm=FALSE) {
+  vars=unlist(list(...))
+  mean_vars=rowMeans(df[,vars], na.rm=na.rm)
+  return(mean_vars)
+}
+
+```
+
+```{r load_data}
+getwd()
+setwd("C:/Users/Yochai/Documents/Stanford Ph.D/Volunteer studies data/Volunteer opportunities bank and survey/Volunteer_Bank_Pilot")
+volopp1=read.csv("VolunteerBank_Pilot1.csv")
+volopp2=read.csv("volunteerBank_Pilot2_edit.csv")
+
+str(volopp1)
+str(volopp2)
+
+#change sub_ID numbers in volopp2 to prepare for merging
+volopp2$Sub_ID=volopp2$Sub_ID+100
+```
+
+```{r creat_new_dataset_both_Pilots}
+volbank=rbind(volopp1, volopp2)
+```
+
+```{r longform_data}
+#Likely
+volbank_lnglik=reshape(volbank,
+                   varying = c("vol1_likely", "vol2_likely","vol3_likely","vol4_likely","vol5_likely","vol6_likely","vol7_likely","vol8_likely","vol9_likely","vol10_likely","vol11_likely","vol12_likely","vol13_likely","vol14_likely","vol15_likely","vol16_likely","vol17_likely","vol18_likely","vol19_likely","vol20_likely","vol21_likely", "vol22_likely"), v.names=c("likely"), timevar = "Vol_Opp", idvar = "Sub_ID", ids=1:78, times=c("vol_opp1","vol_opp2", "vol_opp3", "vol_opp4", "vol_opp5", "vol_opp6", "vol_opp7", "vol_opp8", "vol_opp9", "vol_opp10", "vol_opp11", "vol_opp12", "vol_opp13", "vol_opp14", "vol_opp15", "vol_opp16", "vol_opp17", "vol_opp18", "vol_opp19", "vol_opp20", "vol_opp21", "vol_opp22"), new.row.names = 1:1880, direction ="long")
+
+#tm1
+volbank_lngtm1=reshape(volbank,
+                   varying = c("vol1_tm1", "vol2_tm1", "vol3_tm1", "vol4_tm1", "vol5_tm1", "vol6_tm1","vol7_tm1","vol8_tm1","vol9_tm1","vol10_tm1","vol11_tm1","vol12_tm1","vol13_tm1","vol14_tm1","vol15_tm1","vol16_tm1","vol17_tm1","vol18_tm1","vol19_tm1","vol20_tm1","vol21_tm1", "vol22_tm1"), v.names=c("tm1"), timevar = "Vol_Opp", idvar = "Sub_ID", ids=1:78, times=c("vol_opp1","vol_opp2", "vol_opp3", "vol_opp4", "vol_opp5", "vol_opp6", "vol_opp7", "vol_opp8", "vol_opp9", "vol_opp10", "vol_opp11", "vol_opp12", "vol_opp13", "vol_opp14", "vol_opp15", "vol_opp16", "vol_opp17", "vol_opp18", "vol_opp19", "vol_opp20", "vol_opp21", "vol_opp22"), new.row.names = 1:1880, direction ="long")
+
+#tm2
+volbank_lngtm2=reshape(volbank,
+                   varying = c("vol1_tm2", "vol2_tm2", "vol3_tm2", "vol4_tm2", "vol5_tm2", "vol6_tm2","vol7_tm2","vol8_tm2","vol9_tm2","vol10_tm2","vol11_tm2","vol12_tm2","vol13_tm2","vol14_tm2","vol15_tm2","vol16_tm2","vol17_tm2","vol18_tm2","vol19_tm2","vol20_tm2","vol21_tm2", "vol22_tm2"), v.names=c("tm2"), timevar = "Vol_Opp", idvar = "Sub_ID", ids=1:78, times=c("vol_opp1","vol_opp2", "vol_opp3", "vol_opp4", "vol_opp5", "vol_opp6", "vol_opp7", "vol_opp8", "vol_opp9", "vol_opp10", "vol_opp11", "vol_opp12", "vol_opp13", "vol_opp14", "vol_opp15", "vol_opp16", "vol_opp17", "vol_opp18", "vol_opp19", "vol_opp20", "vol_opp21", "vol_opp22"), new.row.names = 1:1880, direction ="long")
+
+#tm3
+volbank_lngtm3=reshape(volbank,
+                   varying = c("vol1_tm3", "vol2_tm3", "vol3_tm3", "vol4_tm3", "vol5_tm3", "vol6_tm3","vol7_tm3","vol8_tm3","vol9_tm3","vol10_tm3","vol11_tm3","vol12_tm3","vol13_tm3","vol14_tm3","vol15_tm3","vol16_tm3","vol17_tm3","vol18_tm3","vol19_tm3","vol20_tm3","vol21_tm3", "vol22_tm3"), v.names=c("tm3"), timevar = "Vol_Opp", idvar = "Sub_ID", ids=1:78, times=c("vol_opp1","vol_opp2", "vol_opp3", "vol_opp4", "vol_opp5", "vol_opp6", "vol_opp7", "vol_opp8", "vol_opp9", "vol_opp10", "vol_opp11", "vol_opp12", "vol_opp13", "vol_opp14", "vol_opp15", "vol_opp16", "vol_opp17", "vol_opp18", "vol_opp19", "vol_opp20", "vol_opp21", "vol_opp22"), new.row.names = 1:1880, direction ="long")
+
+#sm1
+volbank_lngsm1=reshape(volbank,
+                   varying = c("vol1_sm1", "vol2_sm1", "vol3_sm1", "vol4_sm1", "vol5_sm1", "vol6_sm1","vol7_sm1","vol8_sm1","vol9_sm1","vol10_sm1","vol11_sm1","vol12_sm1","vol13_sm1","vol14_sm1","vol15_sm1","vol16_sm1","vol17_sm1","vol18_sm1","vol19_sm1","vol20_sm1","vol21_sm1", "vol22_sm1"), v.names=c("sm1"), timevar = "Vol_Opp", idvar = "Sub_ID", ids=1:78, times=c("vol_opp1","vol_opp2", "vol_opp3", "vol_opp4", "vol_opp5", "vol_opp6", "vol_opp7", "vol_opp8", "vol_opp9", "vol_opp10", "vol_opp11", "vol_opp12", "vol_opp13", "vol_opp14", "vol_opp15", "vol_opp16", "vol_opp17", "vol_opp18", "vol_opp19", "vol_opp20", "vol_opp21", "vol_opp22"), new.row.names = 1:1880, direction ="long")
+
+#sm2
+volbank_lngsm2=reshape(volbank,
+                   varying = c("vol1_sm2", "vol2_sm2", "vol3_sm2", "vol4_sm2", "vol5_sm2", "vol6_sm2","vol7_sm2","vol8_sm2","vol9_sm2","vol10_sm2","vol11_sm2","vol12_sm2","vol13_sm2","vol14_sm2","vol15_sm2","vol16_sm2","vol17_sm2","vol18_sm2","vol19_sm2","vol20_sm2","vol21_sm2", "vol22_sm2"), v.names=c("sm2"), timevar = "Vol_Opp", idvar = "Sub_ID", ids=1:78, times=c("vol_opp1","vol_opp2", "vol_opp3", "vol_opp4", "vol_opp5", "vol_opp6", "vol_opp7", "vol_opp8", "vol_opp9", "vol_opp10", "vol_opp11", "vol_opp12", "vol_opp13", "vol_opp14", "vol_opp15", "vol_opp16", "vol_opp17", "vol_opp18", "vol_opp19", "vol_opp20", "vol_opp21", "vol_opp22"), new.row.names = 1:1880, direction ="long")
+
+#sm3
+volbank_lngsm3=reshape(volbank,
+                   varying = c("vol1_sm3", "vol2_sm3", "vol3_sm3", "vol4_sm3", "vol5_sm3", "vol6_sm3","vol7_sm3","vol8_sm3","vol9_sm3","vol10_sm3","vol11_sm3","vol12_sm3","vol13_sm3","vol14_sm3","vol15_sm3","vol16_sm3","vol17_sm3","vol18_sm3","vol19_sm3","vol20_sm3","vol21_sm3", "vol22_sm3"), v.names=c("sm3"), timevar = "Vol_Opp", idvar = "Sub_ID", ids=1:78, times=c("vol_opp1","vol_opp2", "vol_opp3", "vol_opp4", "vol_opp5", "vol_opp6", "vol_opp7", "vol_opp8", "vol_opp9", "vol_opp10", "vol_opp11", "vol_opp12", "vol_opp13", "vol_opp14", "vol_opp15", "vol_opp16", "vol_opp17", "vol_opp18", "vol_opp19", "vol_opp20", "vol_opp21", "vol_opp22"), new.row.names = 1:1880, direction ="long")
+
+#Difficulty
+volbank_lngdiff=reshape(volbank,
+                   varying = c("vol1_diff", "vol2_diff","vol3_diff","vol4_diff","vol5_diff","vol6_diff","vol7_diff","vol8_diff","vol9_diff","vol10_diff","vol11_diff","vol12_diff","vol13_diff","vol14_diff","vol15_diff","vol16_diff","vol17_diff","vol18_diff","vol19_diff","vol20_diff","vol21_diff", "vol22_diff"), v.names=c("difficult"), timevar = "Vol_Opp", idvar = "Sub_ID", ids=1:78, times=c("vol_opp1","vol_opp2", "vol_opp3", "vol_opp4", "vol_opp5", "vol_opp6", "vol_opp7", "vol_opp8", "vol_opp9", "vol_opp10", "vol_opp11", "vol_opp12", "vol_opp13", "vol_opp14", "vol_opp15", "vol_opp16", "vol_opp17", "vol_opp18", "vol_opp19", "vol_opp20", "vol_opp21", "vol_opp22"), new.row.names = 1:1880, direction ="long")
+
+#Combine all the repeated measures into one dataframe
+volbank_lng=data.frame(
+  Sub_ID=volbank_lngtm1$Sub_ID,
+  Vol_Opp=volbank_lngtm1$Vol_Opp,
+  likely=volbank_lnglik$likely,
+  tm1=volbank_lngtm1$tm1,
+  tm2=volbank_lngtm2$tm2,
+  tm3=volbank_lngtm3$tm3,
+  sm1=volbank_lngsm1$sm1,
+  sm2=volbank_lngsm2$sm2,
+  sm3=volbank_lngsm3$sm3,
+  difficult=volbank_lngdiff$difficult,
+  Age=volbank_lngtm1$Age)
+volbank_lng$Vol_Opp_num=Recode(volbank_lng$Vol_Opp, "'vol_opp1'='1';
+                              'vol_opp2'='2';
+                              'vol_opp3'='3';
+                              'vol_opp4'='4';
+                              'vol_opp5'='5';
+                              'vol_opp6'='6';
+                              'vol_opp7'='7';
+                              'vol_opp8'='8';
+                              'vol_opp9'='9';
+                              'vol_opp10'='10';
+                              'vol_opp11'='11';
+                              'vol_opp12'='12';
+                              'vol_opp13'='13';
+                              'vol_opp14'='14';
+                              'vol_opp15'='15';
+                              'vol_opp16'='16';
+                              'vol_opp17'='17';
+                              'vol_opp18'='18';
+                              'vol_opp19'='19';
+                              'vol_opp20'='20';
+                              'vol_opp21'='21';
+                              'vol_opp22'='22';", 
+                              as.factor.result=F, as.numeric.result=T)
+
+## set a factor for volunteer opportunity (vol_opp)
+volbank_lng$Vol_Opp=as.factor(volbank_lng$Vol_Opp_num)
+```
+
+```{r Cronbachs_alphas}
+#Cronbach's alpha tm
+tm_alpha=as.matrix(cor(cbind(volbank_lng$tm1, volbank_lng$tm2, volbank_lng$tm3), use="pairwise.complete.obs"))
+row.names(tm_alpha)=(c("tm1", "tm2", "tm3"))
+colnames(tm_alpha)=(c("tm1", "tm2", "tm3"))
+summary(alpha(tm_alpha))#-> alpha =0.94
+
+#Cronbach's alpha sm
+sm_alpha=as.matrix(cor(cbind(volbank_lng$sm1, volbank_lng$sm2, volbank_lng$sm3), use="pairwise.complete.obs"))
+row.names(sm_alpha)=(c("sm1", "sm2", "sm3"))
+colnames(sm_alpha)=(c("sm1", "sm2", "sm3"))
+summary(alpha(sm_alpha))#-> alpha =0.81
+
+#Cronbach's alpha all mtr items
+all_mtr_alpha=as.matrix(cor(cbind(volbank_lng$tm1, volbank_lng$tm2, volbank_lng$tm3, volbank_lng$sm1, volbank_lng$sm2, volbank_lng$sm3), use="pairwise.complete.obs"))
+row.names(all_mtr_alpha)=(c("tm1", "tm2", "tm3", "sm1", "sm2", "sm3"))
+colnames(all_mtr_alpha)=(c("tm1", "tm2", "tm3", "sm1", "sm2", "sm3"))
+summary(alpha(all_mtr_alpha)) #-> all together 0.9
+cor.plot(all_mtr_alpha)
+ggcorr(all_mtr_alpha, label=T)
+
+```
+
+```{r compute scales means}
+#tm
+volbank_lng$tm_av=scale.means(volbank_lng, "tm1", "tm2", "tm3", na.rm = T) #alpha is so high that if there's one (or possibly even 2) missing values it shouldn't matter
+
+#sm
+volbank_lng$sm_av=scale.means(volbank_lng, "sm1", "sm2", "sm3", na.rm=F) #here the alpha doesn't allow us to do that
+```
+
+```{r plots}
+#target mattering (tm_av) all
+ggplot(volbank_lng, aes(x=Vol_Opp, y=tm_av, fill=Vol_Opp))+
+  stat_summary(fun.y="mean", geom="bar", position="dodge")+
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar",
+         position = position_dodge(width = 0.90), width = 0.2, fun.args = list(mult=1)) +
+      labs(x = "Volunteer Opportunity", y = "Target Mattering Score")
+
+#standerdized tm_av
+ggplot(volbank_lng, aes(x=Vol_Opp, y=scale(tm_av), fill=Vol_Opp))+
+  stat_summary(fun.y="mean", geom="bar", position="dodge")+
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar",
+         position = position_dodge(width = 0.90), width = 0.2, fun.args = list(mult=1)) +
+      labs(x = "Volunteer Opportunity", y = "Standerdized Target Mattering Score")
+
+#Self mattering (sm_av) all
+ggplot(volbank_lng, aes(x=Vol_Opp, y=sm_av, fill=Vol_Opp))+
+  stat_summary(fun.y="mean", geom="bar", position="dodge")+
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar",
+         position = position_dodge(width = 0.90), width = 0.2, fun.args = list(mult=1)) +
+      labs(x = "Volunteer Opportunity", y = "Self Mattering Score")
+
+#Standerdized sm scores
+ggplot(volbank_lng, aes(x=Vol_Opp, y=scale(sm_av), fill=Vol_Opp))+
+  stat_summary(fun.y="mean", geom="bar", position="dodge")+
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar",
+         position = position_dodge(width = 0.90), width = 0.2, fun.args = list(mult=1)) +
+      labs(x = "Volunteer Opportunity", y = "Standerdized Self Mattering Score")
+
+```
+
+```{r choice of final 10}
+## initial choices were based of matchings of opportunities cause and type of work - chosen opps 2, 5, 6, 7, 13, 16, 18, 19, 20, 22## 
+
+#Looking for significant difference in tm scores and sm scores#
+
+#step 1- create tm scale.mean for relevant opps in volbank dataframe
+volbank$tm_av_opp2=scale.means(volbank, "vol2_tm1", "vol2_tm2", "vol2_tm3", na.rm = T)
+volbank$tm_av_opp5=scale.means(volbank, "vol5_tm1", "vol5_tm2", "vol5_tm3", na.rm = T)
+volbank$tm_av_opp6=scale.means(volbank, "vol6_tm1", "vol6_tm2", "vol6_tm3", na.rm = T)
+volbank$tm_av_opp7=scale.means(volbank, "vol7_tm1", "vol7_tm2", "vol7_tm3", na.rm = T)
+volbank$tm_av_opp13=scale.means(volbank, "vol13_tm1", "vol13_tm2", "vol13_tm3", na.rm = T)
+volbank$tm_av_opp16=scale.means(volbank, "vol16_tm1", "vol16_tm2", "vol16_tm3", na.rm = T)
+volbank$tm_av_opp18=scale.means(volbank, "vol18_tm1", "vol18_tm2", "vol18_tm3", na.rm = T)
+volbank$tm_av_opp19=scale.means(volbank, "vol19_tm1", "vol19_tm2", "vol19_tm3", na.rm = T)
+volbank$tm_av_opp20=scale.means(volbank, "vol20_tm1", "vol20_tm2", "vol20_tm3", na.rm = T)
+volbank$tm_av_opp22=scale.means(volbank, "vol22_tm1", "vol22_tm2", "vol22_tm3", na.rm = T)
+
+#create sm scale.means for selected opps
+volbank$sm_av_opp2=scale.means(volbank, "vol2_sm1", "vol2_sm2", "vol2_sm3", na.rm = F)
+volbank$sm_av_opp5=scale.means(volbank, "vol5_sm1", "vol5_sm2", "vol5_sm3", na.rm = F)
+volbank$sm_av_opp6=scale.means(volbank, "vol6_sm1", "vol6_sm2", "vol6_sm3", na.rm = F)
+volbank$sm_av_opp7=scale.means(volbank, "vol7_sm1", "vol7_sm2", "vol7_sm3", na.rm = F)
+volbank$sm_av_opp13=scale.means(volbank, "vol13_sm1", "vol13_sm2", "vol13_sm3", na.rm = F)
+volbank$sm_av_opp16=scale.means(volbank, "vol16_sm1", "vol16_sm2", "vol16_sm3", na.rm = F)
+volbank$sm_av_opp18=scale.means(volbank, "vol18_sm1", "vol18_sm2", "vol18_sm3", na.rm = F)
+volbank$sm_av_opp19=scale.means(volbank, "vol19_sm1", "vol19_sm2", "vol19_sm3", na.rm = F)
+volbank$sm_av_opp20=scale.means(volbank, "vol20_sm1", "vol20_sm2", "vol20_sm3", na.rm = F)
+volbank$sm_av_opp22=scale.means(volbank, "vol22_sm1", "vol22_sm2", "vol22_sm3", na.rm = F)
+
+```
+
+```{r differences between matched opps}
+#comparing opp 2 and opp 13 (cause match)##
+#tm
+print(t.test(volbank$tm_av_opp2, volbank$tm_av_opp13, paired = T)) # no difference
+#sm
+print(t.test(volbank$sm_av_opp2, volbank$sm_av_opp13, paired = T)) # no difference
+#likely
+print(t.test(volbank$vol2_likely, volbank$vol13_likely, paired = T)) # no difference
+#difficult
+print(t.test(volbank$vol2_diff, volbank$vol13_diff, paired = T)) # yes- 13 more difficult
+
+##comparing opp 5 and opp 18 (cause match)##
+#tm
+print(t.test(volbank$tm_av_opp5, volbank$tm_av_opp18, paired = T)) # 18 significantly higher tm
+#sm
+print(t.test(volbank$sm_av_opp5, volbank$sm_av_opp18, paired = T)) # 18 significantly higher sm
+#likely
+print(t.test(volbank$vol5_likely, volbank$vol18_likely, paired = T)) # 18 significantly more likely
+#difficult
+print(t.test(volbank$vol5_diff, volbank$vol18_diff, paired = T)) # 18 significantly more difficult
+
+##Comparing opp 5 and opp 6 (work match)##
+#tm
+print(t.test(volbank$tm_av_opp5, volbank$tm_av_opp6, paired = T)) # 6 significantly higher tm
+#sm
+print(t.test(volbank$sm_av_opp5, volbank$sm_av_opp6, paired = T)) # 6 significanlty higer sm
+#likely
+print(t.test(volbank$vol5_likely, volbank$vol6_likely, paired = T)) # no difference
+#difficult
+print(t.test(volbank$vol5_diff, volbank$vol6_diff, paired = T)) # no difference
+
+##Comparing opp 6 and opp 16 (cause match)##
+#tm
+print(t.test(volbank$tm_av_opp6, volbank$tm_av_opp16, paired = T)) # 16 significantly higher tm
+#sm
+print(t.test(volbank$sm_av_opp6, volbank$sm_av_opp16, paired = T)) # 16 significanlty higer sm
+#likely
+print(t.test(volbank$vol6_likely, volbank$vol16_likely, paired = T)) # 16 significantly more likely
+#difficult
+print(t.test(volbank$vol6_diff, volbank$vol16_diff, paired = T)) # 16 significantly more difficult
+
+##Comparing opp 7 and opp 19 (cause match)##
+#tm
+print(t.test(volbank$tm_av_opp7, volbank$tm_av_opp19, paired = T)) # no difference
+#sm
+print(t.test(volbank$sm_av_opp7, volbank$sm_av_opp19, paired = T)) # no difference
+#likely
+print(t.test(volbank$vol7_likely, volbank$vol19_likely, paired = T)) # no difference
+#difficult
+print(t.test(volbank$vol7_diff, volbank$vol19_diff, paired = T)) # no difference
+
+##Comparing opp 7 and opp 20 (work match)##
+#tm
+print(t.test(volbank$tm_av_opp7, volbank$tm_av_opp20, paired = T)) # 7 significanlty higher tm
+#sm
+print(t.test(volbank$sm_av_opp7, volbank$sm_av_opp20, paired = T)) # no difference (trend towards 7 higher sm, p=0.07)
+#likely
+print(t.test(volbank$vol7_likely, volbank$vol20_likely, paired = T)) # no difference
+#difficult
+print(t.test(volbank$vol7_diff, volbank$vol20_diff, paired = T)) # 7 significantly more difficult
+
+##Comparing opp 13 and opp 22 (work match)##
+#tm
+print(t.test(volbank$tm_av_opp13, volbank$tm_av_opp22, paired = T)) # 22 significatly higher tm
+#sm
+print(t.test(volbank$sm_av_opp13, volbank$sm_av_opp22, paired = T)) # 22 significantly higher sm
+#likely
+print(t.test(volbank$vol13_likely, volbank$vol22_likely, paired = T)) # 22 significanlty more likely (p=0.044).
+#difficult
+print(t.test(volbank$vol13_diff, volbank$vol22_diff, paired = T)) # no difference (trend towards 13 more difficult p=0.09)
+
+##Comparing opp 18 and opp 19 (work match)##
+#tm
+print(t.test(volbank$tm_av_opp18, volbank$tm_av_opp19, paired = T)) # 19 significatly higher tm
+#sm
+print(t.test(volbank$sm_av_opp18, volbank$sm_av_opp19, paired = T)) # 19 significantly higher sm
+#likely
+print(t.test(volbank$vol18_likely, volbank$vol19_likely, paired = T)) # 19 significanlty more likely (p=0.02).
+#difficult
+print(t.test(volbank$vol18_diff, volbank$vol19_diff, paired = T)) # no difference
+
+##Comparing opp 20 and opp 22 (cause match- weak)##
+#tm
+print(t.test(volbank$tm_av_opp20, volbank$tm_av_opp22, paired = T)) # no difference
+#sm
+print(t.test(volbank$sm_av_opp20, volbank$sm_av_opp22, paired = T)) # 20 significantly higher sm
+#likely
+print(t.test(volbank$vol20_likely, volbank$vol22_likely, paired = T)) # 20 significanlty more likely.
+#difficult
+print(t.test(volbank$vol20_diff, volbank$vol22_diff, paired = T)) # 22 significantly more difficult
+```
+
+
+```{r plots- final 10, by pairings}
+#create long data frame of the 10 vol opps
+vb_final10=as.data.frame(subset(volbank_lng, subset = Vol_Opp==2|Vol_Opp==5|Vol_Opp==6|Vol_Opp==7|Vol_Opp==13|Vol_Opp==16|Vol_Opp==18|Vol_Opp==19|Vol_Opp==20|Vol_Opp==22))
+
+#Factor for ordering vol opps in alternate c/w matches
+vb_final10$order=Recode(vb_final10$Vol_Opp, "
+                        '2'='0.2';
+                        '13'='1.13';
+                        '22'='2.22';
+                        '20'='3.20';
+                        '7'='4.7';
+                        '19'='5.19';
+                        '18'='6.18';
+                        '5'='7.5';
+                        '6'='8.6';
+                        '16'='9.16';", as.factor.result=T)
+
+##TM scores
+#tm (raw) plot
+ggplot(vb_final10, aes(x=order, y=tm_av, fill=Vol_Opp))+
+  stat_summary(fun.y="mean", geom="bar", position="dodge")+
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar",
+         position = position_dodge(width = 0.90), width = 0.2, fun.args = list(mult=1)) + 
+      labs(x = "Volunteer Opportunity", y = "Target Mattering Score")
+#tm (scale) plot
+ggplot(vb_final10, aes(x=order, y=scale(tm_av), fill=Vol_Opp))+
+  stat_summary(fun.y="mean", geom="bar", position="dodge")+
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar",
+         position = position_dodge(width = 0.90), width = 0.2) +
+      labs(x = "Volunteer Opportunity", y = "Standerdized Target Mattering Score")+ggtitle("Pilots 1&2 combined Std. TM scores (final 10)")
+
+##SM scores
+#sm (raw) plot
+ggplot(vb_final10, aes(x=order, y=sm_av, fill=Vol_Opp))+
+  stat_summary(fun.y="mean", geom="bar", position="dodge")+
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", fun.args=list(mult=1),
+         position = position_dodge(width = 0.90), width = 0.2) +
+      labs(x = "Volunteer Opportunity", y = "Self Mattering Score")
+#sm (scale) plot
+ggplot(vb_final10, aes(x=order, y=scale(sm_av), fill=Vol_Opp))+
+  stat_summary(fun.y="mean", geom="bar", position="dodge")+
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", fun.args=list(mult=1),
+         position = position_dodge(width = 0.90), width = 0.2) +
+      labs(x = "Volunteer Opportunity", y = "Standerdized Self Mattering Score")
+
+
+##Likely scores
+#Likely (raw) plot
+ggplot(vb_final10, aes(x=order, y=likely, fill=Vol_Opp))+
+  stat_summary(fun.y="mean", geom="bar", position="dodge")+
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", fun.args=list(mult=1),
+         position = position_dodge(width = 0.90), width = 0.2) +
+      labs(x = "Volunteer Opportunity", y = "likelihood Rating")
+#Likely (scale) plot
+ggplot(vb_final10, aes(x=order, y=scale(likely), fill=Vol_Opp))+
+  stat_summary(fun.y="mean", geom="bar", position="dodge")+
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", fun.args=list(mult=1),
+         position = position_dodge(width = 0.90), width = 0.2) +
+      labs(x = "Volunteer Opportunity", y = "Standerdized likelihood Rating")
+
+##Difficulty scores
+#Difficult (raw) scores
+ggplot(vb_final10, aes(x=order, y=difficult, fill=Vol_Opp))+
+  stat_summary(fun.y="mean", geom="bar", position="dodge")+
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar",fun.agrs=list(mult=1),
+         position = position_dodge(width = 0.90), width = 0.2) +
+      labs(x = "Volunteer Opportunity", y = "Difficulty Rating")
+#Difficult (scale) plot
+ggplot(vb_final10, aes(x=order, y=scale(difficult), fill=Vol_Opp))+
+  stat_summary(fun.y="mean", geom="bar", position="dodge")+
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", fun.args=list(mult=1),
+         position = position_dodge(width = 0.90), width = 0.2) +
+      labs(x = "Volunteer Opportunity", y = "Standerdized Difficulty Rating")
+
+```
+
+```{r final_10 check for significance of change in ratings from P1 to P2}
+### Step 1- create scale.means for tm and sm in both pilots datasets ###
+#opp 2
+volopp1$vol2_tm_av=scale.means(volopp1, "vol2_tm1", "vol2_tm2", "vol2_tm3", na.rm = T)
+volopp2$vol2_tm_av=scale.means(volopp2, "vol2_tm1", "vol2_tm2", "vol2_tm3", na.rm = T)
+volopp1$vol2_sm_av=scale.means(volopp1, "vol2_sm1", "vol2_sm2", "vol2_sm3", na.rm = F)
+volopp2$vol2_sm_av=scale.means(volopp2, "vol2_sm1", "vol2_sm2", "vol2_sm3", na.rm = F)
+#opp 13
+volopp1$vol13_tm_av=scale.means(volopp1, "vol13_tm1", "vol13_tm2", "vol13_tm3", na.rm = T)
+volopp2$vol13_tm_av=scale.means(volopp2, "vol13_tm1", "vol13_tm2", "vol13_tm3", na.rm = T)
+volopp1$vol13_sm_av=scale.means(volopp1, "vol13_sm1", "vol13_sm2", "vol13_sm3", na.rm = F)
+volopp2$vol2_sm_av=scale.means(volopp2, "vol13_sm1", "vol13_sm2", "vol13_sm3", na.rm = F)
+#opp 22
+volopp1$vol22_tm_av=scale.means(volopp1, "vol22_tm1", "vol22_tm2", "vol22_tm3", na.rm = T)
+volopp2$vol22_tm_av=scale.means(volopp2, "vol22_tm1", "vol22_tm2", "vol22_tm3", na.rm = T)
+volopp1$vol22_sm_av=scale.means(volopp1, "vol22_sm1", "vol22_sm2", "vol22_sm3", na.rm = F)
+volopp2$vol22_sm_av=scale.means(volopp2, "vol22_sm1", "vol22_sm2", "vol22_sm3", na.rm = F)
+#opp 20
+volopp1$vol20_tm_av=scale.means(volopp1, "vol20_tm1", "vol20_tm2", "vol20_tm3", na.rm = T)
+volopp2$vol20_tm_av=scale.means(volopp2, "vol20_tm1", "vol20_tm2", "vol20_tm3", na.rm = T)
+volopp1$vol20_sm_av=scale.means(volopp1, "vol20_sm1", "vol20_sm2", "vol20_sm3", na.rm = F)
+volopp2$vol20_sm_av=scale.means(volopp2, "vol20_sm1", "vol20_sm2", "vol20_sm3", na.rm = F)
+#opp 7
+volopp1$vol7_tm_av=scale.means(volopp1, "vol7_tm1", "vol7_tm2", "vol7_tm3", na.rm = T)
+volopp2$vol7_tm_av=scale.means(volopp2, "vol7_tm1", "vol7_tm2", "vol7_tm3", na.rm = T)
+volopp1$vol7_sm_av=scale.means(volopp1, "vol7_sm1", "vol7_sm2", "vol7_sm3", na.rm = F)
+volopp2$vol7_sm_av=scale.means(volopp2, "vol7_sm1", "vol7_sm2", "vol7_sm3", na.rm = F)
+#opp 19
+volopp1$vol19_tm_av=scale.means(volopp1, "vol19_tm1", "vol19_tm2", "vol19_tm3", na.rm = T)
+volopp2$vol19_tm_av=scale.means(volopp2, "vol19_tm1", "vol19_tm2", "vol19_tm3", na.rm = T)
+volopp1$vol19_sm_av=scale.means(volopp1, "vol19_sm1", "vol19_sm2", "vol19_sm3", na.rm = F)
+volopp2$vol19_sm_av=scale.means(volopp2, "vol19_sm1", "vol19_sm2", "vol19_sm3", na.rm = F)
+#opp 18
+volopp1$vol18_tm_av=scale.means(volopp1, "vol18_tm1", "vol18_tm2", "vol18_tm3", na.rm = T)
+volopp2$vol18_tm_av=scale.means(volopp2, "vol18_tm1", "vol18_tm2", "vol18_tm3", na.rm = T)
+volopp1$vol18_sm_av=scale.means(volopp1, "vol18_sm1", "vol18_sm2", "vol18_sm3", na.rm = F)
+volopp2$vol18_sm_av=scale.means(volopp2, "vol18_sm1", "vol18_sm2", "vol18_sm3", na.rm = F)
+#opp 5
+volopp1$vol5_tm_av=scale.means(volopp1, "vol5_tm1", "vol5_tm2", "vol5_tm3", na.rm = T)
+volopp2$vol5_tm_av=scale.means(volopp2, "vol5_tm1", "vol5_tm2", "vol5_tm3", na.rm = T)
+volopp1$vol5_sm_av=scale.means(volopp1, "vol5_sm1", "vol5_sm2", "vol5_sm3", na.rm = F)
+volopp2$vol5_sm_av=scale.means(volopp2, "vol5_sm1", "vol5_sm2", "vol5_sm3", na.rm = F)
+#opp 6
+volopp1$vol6_tm_av=scale.means(volopp1, "vol6_tm1", "vol6_tm2", "vol6_tm3", na.rm = T)
+volopp2$vol6_tm_av=scale.means(volopp2, "vol6_tm1", "vol6_tm2", "vol6_tm3", na.rm = T)
+volopp1$vol6_sm_av=scale.means(volopp1, "vol6_sm1", "vol6_sm2", "vol6_sm3", na.rm = F)
+volopp2$vol6_sm_av=scale.means(volopp2, "vol6_sm1", "vol6_sm2", "vol6_sm3", na.rm = F)
+#opp 16
+volopp1$vol16_tm_av=scale.means(volopp1, "vol16_tm1", "vol16_tm2", "vol16_tm3", na.rm = T)
+volopp2$vol16_tm_av=scale.means(volopp2, "vol16_tm1", "vol16_tm2", "vol16_tm3", na.rm = T)
+volopp1$vol16_sm_av=scale.means(volopp1, "vol16_sm1", "vol16_sm2", "vol16_sm3", na.rm = F)
+volopp2$vol16_sm_av=scale.means(volopp2, "vol16_sm1", "vol16_sm2", "vol16_sm3", na.rm = F)
+
+### Step 2, independent samples t-tests ###
+
+## opp 2
+#tm
+print(t.test(volopp1$vol2_tm_av, volopp2$vol2_tm_av)) #no difference
+#sm
+print(t.test(volopp1$vol2_sm_av, volopp2$vol2_sm_av)) #no difference
+#likely
+print(t.test(volopp1$vol2_likely, volopp2$vol2_likely)) #no difference (trend P2 higher)
+#Difficult
+print(t.test(volopp1$vol2_diff, volopp2$vol2_diff)) #no difference
+
+## opp 13
+#tm
+print(t.test(volopp1$vol13_tm_av, volopp2$vol13_tm_av)) #no difference
+#sm
+print(t.test(volopp1$vol13_sm_av, volopp2$vol13_sm_av)) #in P1 significantly higher (but difference in sm isn't important/ informative)
+#likely
+print(t.test(volopp1$vol13_likely, volopp2$vol13_likely)) #no difference 
+#Difficult
+print(t.test(volopp1$vol13_diff, volopp2$vol13_diff)) #no difference
+
+## opp 22
+#tm
+print(t.test(volopp1$vol22_tm_av, volopp2$vol22_tm_av)) #no difference
+#sm
+print(t.test(volopp1$vol22_sm_av, volopp2$vol22_sm_av)) #no difference
+#likely
+print(t.test(volopp1$vol22_likely, volopp2$vol22_likely)) #no difference 
+#Difficult
+print(t.test(volopp1$vol22_diff, volopp2$vol22_diff)) #in P2 significantly more difficult (p=0.04)
+
+## opp 20
+#tm
+print(t.test(volopp1$vol20_tm_av, volopp2$vol20_tm_av)) #no difference
+#sm
+print(t.test(volopp1$vol20_sm_av, volopp2$vol20_sm_av)) #no difference
+#likely
+print(t.test(volopp1$vol20_likely, volopp2$vol20_likely)) #no difference
+#Difficult
+print(t.test(volopp1$vol20_diff, volopp2$vol20_diff)) #no difference
+
+## opp 7
+#tm
+print(t.test(volopp1$vol7_tm_av, volopp2$vol7_tm_av)) #no difference
+#sm
+print(t.test(volopp1$vol7_sm_av, volopp2$vol7_sm_av)) #no difference
+#likely
+print(t.test(volopp1$vol7_likely, volopp2$vol7_likely)) #no difference
+#Difficult
+print(t.test(volopp1$vol7_diff, volopp2$vol7_diff)) #no difference
+
+## opp 19
+#tm
+print(t.test(volopp1$vol19_tm_av, volopp2$vol19_tm_av)) #no difference
+#sm
+print(t.test(volopp1$vol19_sm_av, volopp2$vol19_sm_av)) #no difference
+#likely
+print(t.test(volopp1$vol19_likely, volopp2$vol19_likely)) #no difference
+#Difficult
+print(t.test(volopp1$vol19_diff, volopp2$vol19_diff)) #no difference
+
+## opp 18
+#tm
+print(t.test(volopp1$vol18_tm_av, volopp2$vol18_tm_av)) #no difference
+#sm
+print(t.test(volopp1$vol18_sm_av, volopp2$vol18_sm_av)) #no difference
+#likely
+print(t.test(volopp1$vol18_likely, volopp2$vol18_likely)) #no difference
+#Difficult
+print(t.test(volopp1$vol18_diff, volopp2$vol18_diff)) #no difference
+
+## opp 5
+#tm
+print(t.test(volopp1$vol5_tm_av, volopp2$vol5_tm_av)) #no difference
+#sm
+print(t.test(volopp1$vol5_sm_av, volopp2$vol5_sm_av)) #no difference
+#likely
+print(t.test(volopp1$vol5_likely, volopp2$vol5_likely)) #no difference
+#Difficult
+print(t.test(volopp1$vol5_diff, volopp2$vol5_diff)) #no difference
+
+## opp 6
+#tm
+print(t.test(volopp1$vol6_tm_av, volopp2$vol6_tm_av)) #in P2 significantly higher
+#sm
+print(t.test(volopp1$vol6_sm_av, volopp2$vol6_sm_av)) #in P2 significantly higher
+#likely
+print(t.test(volopp1$vol6_likely, volopp2$vol6_likely)) #in P2 significantly higher
+#Difficult
+print(t.test(volopp1$vol6_diff, volopp2$vol6_diff)) #no difference
+
+## opp 16
+#tm
+print(t.test(volopp1$vol16_tm_av, volopp2$vol16_tm_av)) #no difference
+#sm
+print(t.test(volopp1$vol16_sm_av, volopp2$vol16_sm_av)) #no difference
+#likely
+print(t.test(volopp1$vol16_likely, volopp2$vol16_likely)) #no difference
+#Difficult
+print(t.test(volopp1$vol16_diff, volopp2$vol16_diff)) #no difference
+```
+
+Only opp 6 might pose a problem- consider changing the discreption from "Habitat for Humanity ReStore" to "a store selling recycled goods for the benefit of low-income communities"
+

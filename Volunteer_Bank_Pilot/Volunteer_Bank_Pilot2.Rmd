@@ -1,0 +1,223 @@
+---
+title: "Pilot_2"
+author: "Yochai Shavit"
+date: "July 31, 2016"
+output: html_document
+---
+
+```{r load packages}
+library(knitr)
+library(ggplot2)
+library(car)
+library(psych)
+library(dplyr)
+library(tidyr)
+library(lme4)
+library(lmerTest)
+
+```
+
+```{r load data}
+getwd()
+setwd("C:/Users/Yochai/Documents/Stanford Ph.D/Volunteer studies data/Volunteer opportunities bank and survey/Volunteer_Bank_Pilot")
+Pilot2=read.csv("VolunteerBank_Pilot2_edit.csv")
+Pilot2$Sub_ID=as.factor((Pilot2$Sub_ID))
+```
+ 
+```{r long form data}
+#Long-form repeated measures variables
+
+#Likely
+Pilot2_lnglik=reshape(Pilot2,
+                   varying = c("vol1_likely", "vol2_likely","vol3_likely","vol4_likely","vol5_likely","vol6_likely","vol7_likely","vol8_likely","vol9_likely","vol10_likely","vol11_likely","vol12_likely","vol13_likely","vol14_likely","vol15_likely","vol16_likely","vol17_likely","vol18_likely","vol19_likely","vol20_likely","vol21_likely", "vol22_likely"), v.names=c("likely"), timevar = "Vol_Opp", idvar = "Sub_ID", ids=1:38, times=c("vol_opp1","vol_opp2", "vol_opp3", "vol_opp4", "vol_opp5", "vol_opp6", "vol_opp7", "vol_opp8", "vol_opp9", "vol_opp10", "vol_opp11", "vol_opp12", "vol_opp13", "vol_opp14", "vol_opp15", "vol_opp16", "vol_opp17", "vol_opp18", "vol_opp19", "vol_opp20", "vol_opp21", "vol_opp22"), new.row.names = 1:836, direction ="long")
+Pilot2_lnglik$Sub_ID=as.factor(Pilot2_lnglik$Sub_ID)
+
+#tm1
+Pilot2_lngtm1=reshape(Pilot2,
+                   varying = c("vol1_tm1", "vol2_tm1", "vol3_tm1", "vol4_tm1", "vol5_tm1", "vol6_tm1","vol7_tm1","vol8_tm1","vol9_tm1","vol10_tm1","vol11_tm1","vol12_tm1","vol13_tm1","vol14_tm1","vol15_tm1","vol16_tm1","vol17_tm1","vol18_tm1","vol19_tm1","vol20_tm1","vol21_tm1", "vol22_tm1"), v.names=c("tm1"), timevar = "Vol_Opp", idvar = "Sub_ID", ids=1:38, times=c("vol_opp1","vol_opp2", "vol_opp3", "vol_opp4", "vol_opp5", "vol_opp6", "vol_opp7", "vol_opp8", "vol_opp9", "vol_opp10", "vol_opp11", "vol_opp12", "vol_opp13", "vol_opp14", "vol_opp15", "vol_opp16", "vol_opp17", "vol_opp18", "vol_opp19", "vol_opp20", "vol_opp21", "vol_opp22"), new.row.names = 1:836, direction ="long")
+
+#tm2
+Pilot2_lngtm2=reshape(Pilot2,
+                   varying = c("vol1_tm2", "vol2_tm2", "vol3_tm2", "vol4_tm2", "vol5_tm2", "vol6_tm2","vol7_tm2","vol8_tm2","vol9_tm2","vol10_tm2","vol11_tm2","vol12_tm2","vol13_tm2","vol14_tm2","vol15_tm2","vol16_tm2","vol17_tm2","vol18_tm2","vol19_tm2","vol20_tm2","vol21_tm2", "vol22_tm2"), v.names=c("tm2"), timevar = "Vol_Opp", idvar = "Sub_ID", ids=1:38, times=c("vol_opp1","vol_opp2", "vol_opp3", "vol_opp4", "vol_opp5", "vol_opp6", "vol_opp7", "vol_opp8", "vol_opp9", "vol_opp10", "vol_opp11", "vol_opp12", "vol_opp13", "vol_opp14", "vol_opp15", "vol_opp16", "vol_opp17", "vol_opp18", "vol_opp19", "vol_opp20", "vol_opp21", "vol_opp22"), new.row.names = 1:836, direction ="long")
+
+#tm3
+Pilot2_lngtm3=reshape(Pilot2,
+                   varying = c("vol1_tm3", "vol2_tm3", "vol3_tm3", "vol4_tm3", "vol5_tm3", "vol6_tm3","vol7_tm3","vol8_tm3","vol9_tm3","vol10_tm3","vol11_tm3","vol12_tm3","vol13_tm3","vol14_tm3","vol15_tm3","vol16_tm3","vol17_tm3","vol18_tm3","vol19_tm3","vol20_tm3","vol21_tm3", "vol22_tm3"), v.names=c("tm3"), timevar = "Vol_Opp", idvar = "Sub_ID", ids=1:38, times=c("vol_opp1","vol_opp2", "vol_opp3", "vol_opp4", "vol_opp5", "vol_opp6", "vol_opp7", "vol_opp8", "vol_opp9", "vol_opp10", "vol_opp11", "vol_opp12", "vol_opp13", "vol_opp14", "vol_opp15", "vol_opp16", "vol_opp17", "vol_opp18", "vol_opp19", "vol_opp20", "vol_opp21", "vol_opp22"), new.row.names = 1:836, direction ="long")
+
+#sm1
+Pilot2_lngsm1=reshape(Pilot2,
+                   varying = c("vol1_sm1", "vol2_sm1", "vol3_sm1", "vol4_sm1", "vol5_sm1", "vol6_sm1","vol7_sm1","vol8_sm1","vol9_sm1","vol10_sm1","vol11_sm1","vol12_sm1","vol13_sm1","vol14_sm1","vol15_sm1","vol16_sm1","vol17_sm1","vol18_sm1","vol19_sm1","vol20_sm1","vol21_sm1", "vol22_sm1"), v.names=c("sm1"), timevar = "Vol_Opp", idvar = "Sub_ID", ids=1:38, times=c("vol_opp1","vol_opp2", "vol_opp3", "vol_opp4", "vol_opp5", "vol_opp6", "vol_opp7", "vol_opp8", "vol_opp9", "vol_opp10", "vol_opp11", "vol_opp12", "vol_opp13", "vol_opp14", "vol_opp15", "vol_opp16", "vol_opp17", "vol_opp18", "vol_opp19", "vol_opp20", "vol_opp21", "vol_opp22"), new.row.names = 1:836, direction ="long")
+
+#sm2
+Pilot2_lngsm2=reshape(Pilot2,
+                   varying = c("vol1_sm2", "vol2_sm2", "vol3_sm2", "vol4_sm2", "vol5_sm2", "vol6_sm2","vol7_sm2","vol8_sm2","vol9_sm2","vol10_sm2","vol11_sm2","vol12_sm2","vol13_sm2","vol14_sm2","vol15_sm2","vol16_sm2","vol17_sm2","vol18_sm2","vol19_sm2","vol20_sm2","vol21_sm2", "vol22_sm2"), v.names=c("sm2"), timevar = "Vol_Opp", idvar = "Sub_ID", ids=1:38, times=c("vol_opp1","vol_opp2", "vol_opp3", "vol_opp4", "vol_opp5", "vol_opp6", "vol_opp7", "vol_opp8", "vol_opp9", "vol_opp10", "vol_opp11", "vol_opp12", "vol_opp13", "vol_opp14", "vol_opp15", "vol_opp16", "vol_opp17", "vol_opp18", "vol_opp19", "vol_opp20", "vol_opp21", "vol_opp22"), new.row.names = 1:836, direction ="long")
+
+#sm3
+Pilot2_lngsm3=reshape(Pilot2,
+                   varying = c("vol1_sm3", "vol2_sm3", "vol3_sm3", "vol4_sm3", "vol5_sm3", "vol6_sm3","vol7_sm3","vol8_sm3","vol9_sm3","vol10_sm3","vol11_sm3","vol12_sm3","vol13_sm3","vol14_sm3","vol15_sm3","vol16_sm3","vol17_sm3","vol18_sm3","vol19_sm3","vol20_sm3","vol21_sm3", "vol22_sm3"), v.names=c("sm3"), timevar = "Vol_Opp", idvar = "Sub_ID", ids=1:38, times=c("vol_opp1","vol_opp2", "vol_opp3", "vol_opp4", "vol_opp5", "vol_opp6", "vol_opp7", "vol_opp8", "vol_opp9", "vol_opp10", "vol_opp11", "vol_opp12", "vol_opp13", "vol_opp14", "vol_opp15", "vol_opp16", "vol_opp17", "vol_opp18", "vol_opp19", "vol_opp20", "vol_opp21", "vol_opp22"), new.row.names = 1:836, direction ="long")
+
+#Difficulty
+Pilot2_lngdiff=reshape(Pilot2,
+                   varying = c("vol1_diff", "vol2_diff","vol3_diff","vol4_diff","vol5_diff","vol6_diff","vol7_diff","vol8_diff","vol9_diff","vol10_diff","vol11_diff","vol12_diff","vol13_diff","vol14_diff","vol15_diff","vol16_diff","vol17_diff","vol18_diff","vol19_diff","vol20_diff","vol21_diff", "vol22_diff"), v.names=c("difficult"), timevar = "Vol_Opp", idvar = "Sub_ID", ids=1:38, times=c("vol_opp1","vol_opp2", "vol_opp3", "vol_opp4", "vol_opp5", "vol_opp6", "vol_opp7", "vol_opp8", "vol_opp9", "vol_opp10", "vol_opp11", "vol_opp12", "vol_opp13", "vol_opp14", "vol_opp15", "vol_opp16", "vol_opp17", "vol_opp18", "vol_opp19", "vol_opp20", "vol_opp21", "vol_opp22"), new.row.names = 1:836, direction ="long")
+
+#Combine all the repeated measures into one dataframe
+Pilot2_lng=data.frame(
+  Sub_ID=Pilot2_lnglik$Sub_ID,
+  Vol_Opp=Pilot2_lngtm1$Vol_Opp,
+  likely=Pilot2_lnglik$likely,
+  tm1=Pilot2_lngtm1$tm1,
+  tm2=Pilot2_lngtm2$tm2,
+  tm3=Pilot2_lngtm3$tm3,
+  sm1=Pilot2_lngsm1$sm1,
+  sm2=Pilot2_lngsm2$sm2,
+  sm3=Pilot2_lngsm3$sm3,
+  difficult=Pilot2_lngdiff$difficult,
+  Age=Pilot2_lngtm1$Age)
+Pilot2_lng$Vol_Opp_num=recode(Pilot2_lng$Vol_Opp, "'vol_opp1'='1';
+                              'vol_opp2'='2';
+                              'vol_opp3'='3';
+                              'vol_opp4'='4';
+                              'vol_opp5'='5';
+                              'vol_opp6'='6';
+                              'vol_opp7'='7';
+                              'vol_opp8'='8';
+                              'vol_opp9'='9';
+                              'vol_opp10'='10';
+                              'vol_opp11'='11';
+                              'vol_opp12'='12';
+                              'vol_opp13'='13';
+                              'vol_opp14'='14';
+                              'vol_opp15'='15';
+                              'vol_opp16'='16';
+                              'vol_opp17'='17';
+                              'vol_opp18'='18';
+                              'vol_opp19'='19';
+                              'vol_opp20'='20';
+                              'vol_opp21'='21';
+                              'vol_opp22'='22';", 
+                              as.factor.result=F, as.numeric.result=T)
+```
+
+```{r Cronbach's alphas}
+#Mattering items across all volunteer opportnities
+tm_alpha2=as.matrix(cor(cbind(Pilot2_lng$tm1, Pilot2_lng$tm2, Pilot2_lng$tm3), use="pairwise.complete.obs"))
+row.names(tm_alpha2)=(c("tm1", "tm2", "tm3"))
+colnames(tm_alpha2)=(c("tm1", "tm2", "tm3"))
+summary(alpha(tm_alpha2)) #->0.92
+
+sm_alpha2=as.matrix(cor(cbind(Pilot2_lng$sm1, Pilot2_lng$sm2, Pilot2_lng$sm3), use="pairwise.complete.obs"))
+row.names(sm_alpha2)=(c("sm1", "sm2", "sm3"))
+colnames(sm_alpha2)=(c("sm1", "sm2", "sm3"))
+summary(alpha(sm_alpha2)) #->0.83
+
+tsm_alpha2=as.matrix(cor(cbind(Pilot2_lng$sm1, Pilot2_lng$sm2, Pilot2_lng$sm3,Pilot2_lng$tm1, Pilot2_lng$tm2, Pilot2_lng$tm3), use="pairwise.complete.obs"))
+row.names(tsm_alpha2)=(c("sm1", "sm2", "sm3", "tm1", "tm2", "tm3"))
+colnames(tsm_alpha2)=(c("sm1", "sm2", "sm3", "tm1", "tm2", "tm3"))
+summary(alpha(tsm_alpha2)) #->0.89
+
+# For each Volunteer opportunity #
+#Vol_1
+vol1_alpha2=as.matrix(cor(cbind(Pilot2$vol1_tm1, Pilot2$vol1_tm2, Pilot2$vol1_tm3),use="pairwise.complete.obs"))
+row.names(vol1_alpha2)=(c("tm1", "tm2", "tm3"))
+colnames(vol1_alpha2)=(c("tm1", "tm2", "tm3"))
+summary(alpha(vol1_alpha2, check.keys = F)) #-> 0.89 with just tm, 0.89 tm+sm
+
+#vol_2
+vol2_alpha2=as.matrix(cor(cbind(Pilot2$vol2_tm1, Pilot2$vol2_tm2, Pilot2$vol2_tm3),use="pairwise.complete.obs"))
+row.names(vol2_alpha2)=(c("tm1", "tm2", "tm3"))
+colnames(vol2_alpha2)=(c("tm1", "tm2", "tm3"))
+summary(alpha(vol2_alpha2, check.keys = F)) #-> 0.91 with just tm, 0.91 tm+sm
+
+#Vol_3
+vol3_alpha2=as.matrix(cor(cbind(Pilot2$vol3_tm1, Pilot2$vol3_tm2, Pilot2$vol3_tm3),use="pairwise.complete.obs"))
+row.names(vol3_alpha2)=(c("tm1", "tm2", "tm3"))
+colnames(vol3_alpha2)=(c("tm1", "tm2", "tm3"))
+summary(alpha(vol3_alpha2, check.keys = F)) #-> 0.96 with just tm, 0.79 tm+sm (sm2 & sm3 are negatively correlated with the scale)
+
+#Vol_4
+vol4_alpha2=as.matrix(cor(cbind(Pilot2$vol4_tm1, Pilot2$vol4_tm2, Pilot2$vol4_tm3, Pilot2$vol4_sm1, Pilot2$vol4_sm2, Pilot2$vol4_sm3),use="pairwise.complete.obs"))
+row.names(vol4_alpha2)=(c("tm1", "tm2", "tm3", "sm1", "sm2", "sm3"))
+colnames(vol4_alpha2)=(c("tm1", "tm2", "tm3", "sm1", "sm2", "sm3"))
+summary(alpha(vol4_alpha2, check.keys = F)) #-> 0.84 with just tm, 0.86 tm+sm 
+
+#Vol_5
+vol5_alpha2=as.matrix(cor(cbind(Pilot2$vol5_tm1, Pilot2$vol5_tm2, Pilot2$vol5_tm3),use="pairwise.complete.obs"))
+row.names(vol5_alpha2)=(c("tm1", "tm2", "tm3"))
+colnames(vol5_alpha2)=(c("tm1", "tm2", "tm3"))
+summary(alpha(vol5_alpha2, check.keys = F)) #-> 0.89 with just tm, 0.84 with tm+sm
+```
+
+```{r standerdized tm scores}
+#Option 1- creating a variable in Pilot2 (wide dataset)
+#Step 1- values
+#Create a value of average tm across the three items
+x1_2=mean(na.omit(c(Pilot2$vol1_tm1, Pilot2$vol1_tm2, Pilot2$vol1_tm3)))
+sd1_2=sd(na.omit(c(Pilot2$vol1_tm1, Pilot2$vol1_tm2, Pilot2$vol1_tm3)))
+x2_2=mean(na.omit(c(Pilot2$vol2_tm1, Pilot2$vol2_tm2, Pilot2$vol2_tm3)))
+sd2_2=sd(na.omit(c(Pilot2$vol2_tm1, Pilot2$vol2_tm2, Pilot2$vol2_tm3)))
+x3_2=mean(na.omit(c(Pilot2$vol3_tm1, Pilot2$vol3_tm2, Pilot2$vol3_tm3)))
+sd3_2=sd(na.omit(c(Pilot2$vol3_tm1, Pilot2$vol3_tm2, Pilot2$vol3_tm3)))
+x4_2=mean(na.omit(c(Pilot2$vol4_tm1, Pilot2$vol4_tm2, Pilot2$vol4_tm3)))
+sd4_2=sd(na.omit(c(Pilot2$vol4_tm1, Pilot2$vol4_tm2, Pilot2$vol4_tm3)))
+x5_2=mean(na.omit(c(Pilot2$vol5_tm1, Pilot2$vol5_tm2, Pilot2$vol5_tm3)))
+sd5_2=sd(na.omit(c(Pilot2$vol5_tm1, Pilot2$vol5_tm2, Pilot2$vol5_tm3)))
+x6_2=mean(na.omit(c(Pilot2$vol6_tm1, Pilot2$vol6_tm2, Pilot2$vol6_tm3)))
+sd6_2=sd(na.omit(c(Pilot2$vol6_tm1, Pilot2$vol6_tm2, Pilot2$vol6_tm3)))
+x7_2=mean(na.omit(c(Pilot2$vol7_tm1, Pilot2$vol7_tm2, Pilot2$vol7_tm3)))
+sd7_2=sd(na.omit(c(Pilot2$vol7_tm1, Pilot2$vol7_tm2, Pilot2$vol7_tm3)))
+x8_2=mean(na.omit(c(Pilot2$vol8_tm1, Pilot2$vol8_tm2, Pilot2$vol8_tm3)))
+sd8_2=sd(na.omit(c(Pilot2$vol8_tm1, Pilot2$vol8_tm2, Pilot2$vol8_tm3)))
+x9_2=mean(na.omit(c(Pilot2$vol9_tm1, Pilot2$vol9_tm2, Pilot2$vol9_tm3)))
+sd9_2=sd(na.omit(c(Pilot2$vol9_tm1, Pilot2$vol9_tm2, Pilot2$vol9_tm3)))
+x10_2=mean(na.omit(c(Pilot2$vol10_tm1, Pilot2$vol10_tm2, Pilot2$vol10_tm3)))
+sd10_2=sd(na.omit(c(Pilot2$vol10_tm1, Pilot2$vol10_tm2, Pilot2$vol10_tm3)))
+x11_2=mean(na.omit(c(Pilot2$vol11_tm1, Pilot2$vol11_tm2, Pilot2$vol11_tm3)))
+sd11_2=sd(na.omit(c(Pilot2$vol11_tm1, Pilot2$vol11_tm2, Pilot2$vol11_tm3)))
+x12_2=mean(na.omit(c(Pilot2$vol12_tm1, Pilot2$vol12_tm2, Pilot2$vol12_tm3)))
+sd12_2=sd(na.omit(c(Pilot2$vol12_tm1, Pilot2$vol12_tm2, Pilot2$vol12_tm3)))
+x13_2=mean(na.omit(c(Pilot2$vol13_tm1, Pilot2$vol13_tm2, Pilot2$vol13_tm3)))
+sd13_2=sd(na.omit(c(Pilot2$vol13_tm1, Pilot2$vol13_tm2, Pilot2$vol13_tm3)))
+x14_2=mean(na.omit(c(Pilot2$vol14_tm1, Pilot2$vol14_tm2, Pilot2$vol14_tm3)))
+sd14_2=sd(na.omit(c(Pilot2$vol14_tm1, Pilot2$vol14_tm2, Pilot2$vol14_tm3)))
+x15_2=mean(na.omit(c(Pilot2$vol15_tm1, Pilot2$vol15_tm2, Pilot2$vol15_tm3)))
+sd15_2=sd(na.omit(c(Pilot2$vol15_tm1, Pilot2$vol15_tm2, Pilot2$vol15_tm3)))
+x16_2=mean(na.omit(c(Pilot2$vol16_tm1, Pilot2$vol16_tm2, Pilot2$vol16_tm3)))
+sd16_2=sd(na.omit(c(Pilot2$vol16_tm1, Pilot2$vol16_tm2, Pilot2$vol16_tm3)))
+x17_2=mean(na.omit(c(Pilot2$vol17_tm1, Pilot2$vol17_tm2, Pilot2$vol17_tm3)))
+sd17_2=sd(na.omit(c(Pilot2$vol17_tm1, Pilot2$vol17_tm2, Pilot2$vol17_tm3)))
+x18_2=mean(na.omit(c(Pilot2$vol18_tm1, Pilot2$vol18_tm2, Pilot2$vol18_tm3)))
+sd18_2=sd(na.omit(c(Pilot2$vol18_tm1, Pilot2$vol18_tm2, Pilot2$vol18_tm3)))
+x19_2=mean(na.omit(c(Pilot2$vol19_tm1, Pilot2$vol19_tm2, Pilot2$vol19_tm3)))
+sd19_2=sd(na.omit(c(Pilot2$vol19_tm1, Pilot2$vol19_tm2, Pilot2$vol19_tm3)))
+x20_2=mean(na.omit(c(Pilot2$vol20_tm1, Pilot2$vol20_tm2, Pilot2$vol20_tm3)))
+sd20_2=sd(na.omit(c(Pilot2$vol20_tm1, Pilot2$vol20_tm2, Pilot2$vol20_tm3)))
+x21_2=mean(na.omit(c(Pilot2$vol21_tm1, Pilot2$vol21_tm2, Pilot2$vol21_tm3)))
+sd21_2=sd(na.omit(c(Pilot2$vol21_tm1, Pilot2$vol21_tm2, Pilot2$vol21_tm3)))
+x22_2=mean(na.omit(c(Pilot2$vol22_tm1, Pilot2$vol22_tm2, Pilot2$vol22_tm3)))
+sd22_2=sd(na.omit(c(Pilot2$vol22_tm1, Pilot2$vol22_tm2, Pilot2$vol22_tm3)))
+
+#################################################################################
+
+#Option 3- probably the best one- create a tm score in Pilot2_lng, based on invidual participants scores for each opportunity
+
+Pilot2_lng$tm_av=(Pilot2_lng$tm1+Pilot2_lng$tm2+Pilot2_lng$tm3)/3
+#Plot (should look like the plot from option 1 but with errorbars that make sense)
+ggplot(data=Pilot2_lng, aes(x=Vol_Opp, y=scale(tm_av), fill=Vol_Opp))+
+ stat_summary(fun.y="mean", geom="bar", position = "dodge")+
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", mult=1,
+         position = position_dodge(width = 0.90), width = 0.2) +
+      labs(x = "Volunteer Opportunity", y = "Standerdized Target Mattering Score")
+ggsave("Standerdized Target mattering scores pilot 2.png")
+
+#Let's do the same thing with sm scores- I expected that error bars here would be much wider and that differences between vol_opps won't be so evident-> That's not the case
+
+Pilot2_lng$sm_av=(Pilot2_lng$sm1+Pilot2_lng$sm2+Pilot2_lng$sm3)/3
+
+ggplot(data=Pilot2_lng, aes(x=Vol_Opp, y=scale(sm_av), fill=Vol_Opp))+
+ stat_summary(fun.y="mean", geom="bar", position = "dodge")+
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", mult=1,
+         position = position_dodge(width = 0.90), width = 0.2) +
+      labs(x = "Volunteer Opportunity", y = "Standerdized Self Mattering Score")
+
+```
+
